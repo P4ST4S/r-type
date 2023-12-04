@@ -1,0 +1,14 @@
+# Target labels
+ raylib-populate
+# Source files and their labels
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/CMakeFiles/raylib-populate
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/CMakeFiles/raylib-populate.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/CMakeFiles/raylib-populate-complete.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-build.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-configure.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-download.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-install.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-mkdir.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-patch.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-test.rule
+/home/pastas/delivery/B-CPP-500-PAR-5-1-rtype-ethan.nguyen/build/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-update.rule

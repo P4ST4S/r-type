@@ -1,0 +1,70 @@
+/*
+** EPITECH PROJECT, 2023
+** B-CPP-500-PAR-5-1-rtype-ethan.nguyen
+** File description:
+** TextureBank
+*/
+
+#pragma once
+
+#include "IGraphic.hpp"
+
+enum e_textureID {
+    BIRDHOUSE_BACKGROUND,
+    CUPHEAD_BACKGROUND,
+    TITLE_BROTHERS,
+    PLAYER1_DEAD,
+    PLAYER1_UP,
+    PLAYER1_DOWN,
+    PLAYER1_IDLE,
+    PLAYER1_MINI_MISSILE,
+    PLAYER1_MISSILE,
+    PLAYER1_TRANSI_DOWN,
+    PLAYER1_TRANSI_UP,
+    PLAYER2_DEAD,
+    PLAYER2_UP,
+    PLAYER2_DOWN,
+    PLAYER2_IDLE,
+    PLAYER2_MINI_MISSILE,
+    PLAYER2_MISSILE,
+    PLAYER2_TRANSI_DOWN,
+    PLAYER2_TRANSI_UP,
+    PLAYER3_DEAD,
+    PLAYER3_UP,
+    PLAYER3_DOWN,
+    PLAYER3_IDLE,
+    PLAYER3_MINI_MISSILE,
+    PLAYER3_MISSILE,
+    PLAYER3_TRANSI_DOWN,
+    PLAYER3_TRANSI_UP,
+    BLUE_DEVIL_FLY,
+    BARREL_IDLE,
+    BARREL_FALLING,
+    BARREL_REMONTADA,
+    BARREL_REMONTADA_TRANSI,
+    GHOST_BOSS_IDLE,
+    GHOST_BOSS_ATTACK,
+    GHOST_BOSS_DEAD,
+    GHOST_BOSS_MISSILE,
+    BLIMP_GREEN_IDLE,
+    BLIMP_GREEN_ATTACK,
+    BLIMP_PURPLE_IDLE,
+    BLIMP_PURPLE_ATTACK,
+    ENEMY_BULLET,
+    ENEMY_PINK_BULLET,
+    SMOKE_EXPLOSION,
+    EXPLOSION,
+    NB_TEXTURES
+};
+
+struct TextureInfo
+{
+    std::string path;
+    RGraphic::RVect2_t dimension;
+    std::size_t nframes;
+};
+
+namespace TexturesGlobal
+{
+    extern TextureInfo BANK[NB_TEXTURES];
+}

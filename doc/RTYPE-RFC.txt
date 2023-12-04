@@ -1,0 +1,915 @@
+Epitech 2023 - R-TYPE                                                 Yann LEBIB
+                                                                 Antoine ROSPARS
+                                                          Jean-Pierre JANOPOULOS
+                                                                    Ethan NGUYEN
+                                                                    Lenny VIGEON
+                                                                      2023-09-19
+
+                    R-TYPE Client-Server Protocol (RTYP)
+
+Abstract
+
+    This document describes the R-TYPE Client-Server Protocol, a custom
+    protocol designed for the R-TYPE application. The protocol defines the
+    structure of requests and responses exchanged between clients and the
+    server in order to perform various actions.
+
+Overview
+
+    R-TYPE is a multiplayer video game, when each player control a little
+    spaceship and try to kill monster while avoiding enemies attack.
+
+    The R-TYPE protocol aims to a flexible, optimized and lightweight protocol.
+    This protocol describes the structure and format of requests sent from the
+    client to the server, as well as the responses sent from the server back to
+    the client.
+
+    This RFC document aims to provide a comprehensive and full overview of the
+    R-TYPE protocol, including the structure of requests and responses, the
+    various command types, and the associated handler functions for each
+    command. The protocol is designed with extensibility in mind, allowing for
+    future additions and modifications as the R-TYPE protocol is more made
+    according an ECS than a specific game.
+
+Teminology
+
+    The following terms are used throughout this document:
+
+    -  client: the application that sends requests to the server
+    -  server: the application that receives requests from the client and
+       sends responses back to the client
+    -  host: A server who has been
+
+    -  request: a message sent from the client to the server
+    -  response: a message sent from the server to the client
+    -  header: the fixed-length part of a request or response
+    -  body: the variable-length part of a request or response
+    -  command: an action that can be requested by the client and performed
+       by the server
+    -  command type: the type of command being requested (e.g. LOGIN, LOGOUT,
+       SEND, etc.)
+
+
+1. Request/Response Structure
+
+    HEADER
+
+        The header is fixed-length and contains the following
+        fields:
+
+        magic number: A 4 bytes string (RTYP) that indicate
+            the package is theorically correct.
+
+        body size: Indicate how big the body of package is.
+
+        command type: Determine the body of the package.
+
+        Every package sent or received MUST start with this header:
+
+        -   4 bytes: magic number (str)
+        -   4 bytes: body size (uint)
+        -   2 bytes: command type (uint)
+        Total: 10 bytes
+
+    BODY
+
+        The body is variable-length depending on the command type.
+        Each command type has its own specific body structure, which is defined
+        in section 2.
+
+
+
+2. Command type
+
+    INFO:
+        Since this is an UDP protocol,
+        keep in mind that no package is guaranteed to be received.
+        So you must be warry of absence of response or missing information.
+
+        You can also receive at any time a
+        0x000: RESPONSE (0x07 KICKED FROM SERVER)
+
+    The following command types/codes are defined:
+        - 0x0000: RESPONSE
+        - 0x0001: CLIENT CONNECTION REQUEST
+        - 0x0002: CLIENT SERVER CONNECT
+        - 0x0003: PING
+        - 0x0004: CLIENT DISCONNECT
+        - 0x0005: STOP SERVER
+
+        - 0x0006: SERVER SETTINGS
+        - 0x0007: LOCAL SERVER SETTINGS
+        - 0x0008: SET USERNAME
+        - 0x0009: PLAYER LIST
+        - 0x000A: SET READY STATUS
+        - 0x000B: START GAME LOADING
+        - 0x000C: GAME START
+
+        - 0x000D: NEW ENTITIES
+        - 0x000E: MOVE ENTITIES
+        - 0x000F: DESTROY ENTITIES
+        - 0x0010: CLIENT MOVE EVENT
+        - 0x0011: CLIENT SHOOT EVENT
+
+    0xFFFF is reserved to indicate that command type is unknown.
+
+
+
+
+    2.0. 0x0000: RESPONSE
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+        - UDP
+
+    DESCRIPTION:
+        This is a general purpose package, that can be use in many context.
+        The documentation will mention when response are used.
+
+    BODY:
+        -   1 byte : response status (uint)
+        -   2 bytes: command type (uint)
+        Total: 3 bytes
+
+    BODY DESCRIPTION:
+        response status: Contain one of the following code,
+            0x00: OK (Everything went well)
+            0x01: KO (Something went wrong)
+            0x02: INVALID HEADER (Wrongly formed header)
+            0X03: INVALID BODY (Wrongly formed body)
+            0x04: UNAUTHORIZED (Request is recognized but unauthorized)
+            0x05: SERVER FULL (Only sent at connection when server full)
+            0x06: SERVER CLOSING (When server is closing)
+            0x07: KICKED FROM SERVER (When server cut the connection)
+            0x08: INFORMATION (To request information to server)
+
+        0xFF is reserved to indicate that response status is unknown.
+
+        command type: Give context about which command returned this response.
+            If the reponse is not related to any command or
+            the source command is not found, then the value must be 0.
+
+    HOST SIDE:
+        This package can be sent at any time,
+        usually after client sent a package.
+
+    CLIENT SIDE:
+        This package is expected to be sent in specific case
+        that will be described further in the documentation.
+
+    RESPONSE SPECIFIC CASE:
+        Some command in this documentation will have the following line:
+        "Package can be requested throught an information response package."
+        This means that you can send the following package
+        to the server at any time:
+        // Header
+        -   4 bytes: RTYP (str)
+        -   4 bytes: 3 (uint)
+        -   2 bytes: 0x0000 (RESPONSE) (uint)
+        // Body
+        -   1 byte : 0x08 (INFORMATION) (uint)
+        -   2 bytes: {The command that support this package} (uint)
+
+
+
+
+    2.1. 0x0001: CLIENT CONNECTION REQUEST
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        This the first package send by the client
+        to establish connection with the server.
+
+    BODY DESCRIPTION:
+        client type: Indicate the client status in game:
+            0x00: PLAYER CLIENT
+            0x01: SPECTATOR CLIENT
+
+    BODY:
+        -   1 byte : client type (uint)
+        Total: 1 bytes
+
+    HOST SIDE:
+        Not sent by host server, if sent you can ignore it.
+        host -> client:
+            0x0000: RESPONSE
+                - 0x07: KICKED FROM SERVER (If timeout)
+
+    CLIENT SIDE:
+        Send this package when you want to establish connection.
+        PACKAGE PROCESS
+            client -> host:
+                0x0001: CLIENT CONNECTION REQUEST
+            host -> client:
+                0x0000: RESPONSE
+                    - 0x00: OK
+                    - 0x01: KO
+                    - 0x02: INVALID HEADER
+                    - 0x05: SERVER FULL (Only when request 0x00 PLAYER CLIENT)
+                    - 0x07: KICKED FROM SERVER (If timeout)
+
+
+
+
+    2.2. 0x0002: CLIENT SERVER CONNECT
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        To use if you are connected to a client server.
+        This will request the client server to connect to a host server.
+
+    BODY DESCRIPTION:
+        IP: IP address to the host server.
+
+        Port: Port where the host server listen.
+
+    BODY:
+        -   4 bytes: IP (uint)
+        -   2 bytes: Port (uint)
+        Total: 6 bytes
+
+    HOST SIDE:
+        Not sent by host server, if sent you can ignore it.
+        host -> client:
+            0x0000: RESPONSE
+                - 0x07: KICKED FROM SERVER (If timeout)
+
+    CLIENT SIDE:
+        You can send this package at anytime.
+        PACKAGE PROCESS
+            client -> host:
+                0x0002: CLIENT SERVER CONNECT
+            host -> client:
+                0x0000: RESPONSE
+                    - 0x00: OK
+                    - 0x01: KO
+                    - 0x02: INVALID HEADER
+                    - 0x05: SERVER FULL
+                    - 0x07: KICKED FROM SERVER (If timeout)
+
+
+
+
+    2.3. 0x0003: PING
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+        - UDP
+
+    DESCRIPTION:
+        This package is sent to check that the connection is still alive.
+
+    BODY:
+        Total: 0 bytes
+
+    HOST SIDE:
+        The host this package when it been more than 1 second
+        since client sent a package.
+        The host doesn't ping non-authentified client.
+        PACKAGE PROCESS
+            host -> client:
+                0x0003: PING
+            client -> host:
+                0x0000: RESPONSE
+                    - 0x00: OK
+
+    CLIENT SIDE:
+        You can send this package to check if you're still
+        connected to the server.
+        PACKAGE PROCESS
+            client -> host:
+                0x0003: PING
+            host -> client:
+                0x0000: RESPONSE
+                    - 0x00: OK
+
+
+
+
+    2.4. 0x0004: CLIENT DISCONNECT
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Indicate to the host server that you are disconnecting.
+        Or to the other clients that you are disconnecting.
+
+    BODY DESCRIPTION:
+        -   2  bytes: Player ID (uint)
+        Total: 2 byte
+
+    HOST SIDE:
+        Sent when a client disconnect.
+        PACKAGE PROCESS
+            host -> client:
+                0x0004: CLIENT DISCONNECT
+
+    CLIENT SIDE:
+        You can send this package at anytime.
+        And you don't have to fill the body.
+        PACKAGE PROCESS
+            client -> host:
+                0x0004: CLIENT DISCONNECT
+            host -> client:
+                0x0000: RESPONSE
+                    - 0x01: KO
+                    - 0x02: INVALID HEADER
+                    - 0x03: INVALID BODY
+                    - 0x07: KICKED FROM SERVER (Disconnection confirmed)
+
+
+
+
+    2.5. 0x0005: STOP SERVER
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Let you stop the server.
+        This command is taken in account only
+        if you're connected in localhost to the server.
+
+    BODY DESCRIPTION:
+        Total: 0 byte
+
+    HOST SIDE:
+        Not sent by host server, if sent you can ignore it.
+
+    CLIENT SIDE:
+        You can send this package at anytime.
+        PACKAGE PROCESS
+            client -> host:
+                0x0005: STOP SERVER
+            host -> client:
+                0x0000: RESPONSE
+                    - 0x01: KO
+                    - 0x02: INVALID HEADER
+                    - 0X03: INVALID BODY
+                    - 0X04: UNAUTHORIZED
+                    - 0x06: SERVER CLOSING (Server is about to stop)
+
+
+
+
+    2.6. 0x0006: SERVER SETTINGS
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        This package let you know how the host server is configured,
+
+        If you're connected in localhost to a server,
+        you can send this package to modify it's settings.
+        However if this server is not in host mode,
+        you can only modify the server mode.
+        It can be sent at any time.
+
+        This package can have different data depending
+        the game that use this protocol. The folllowing example is for R-TYPE.
+        But you can replace it by your own data depending your needs.
+
+    BODY DESCRIPTION:
+        Local IP: The IP of the device on the local network.
+
+        Public IP: The IP of the device on the internet. (0.0.0.0 if not known)
+
+        Port: The port where the server listen.
+
+        Server mode: Tells you if the server is in host mode or client mode.
+            -   HOST MODE: Means the server is master and have the absolute
+                constrol over everything that happen in the game.
+                There's only one server in host mode by game.
+            -   CLIENT MODE: Means the server is slave from a host server,
+                those server can guess information and run without the host
+                server if information missing, but will always resync
+                information with the host server as soon as the connection is
+                back.
+            Codes:
+                0x00: Host mode
+                0x01: Client mode
+
+        Status: Here are the possible status:
+            0x00: Lobby
+            0x01: Loading game
+            0x02: In game
+            0x03: Unloading game
+
+        Max client: The number of client that can be connected to the server.
+
+        Friendly fire: Inform if friendly fire is enabled.
+
+        Collision with enemy: Inform if player will collide enemies.
+
+        Collision with ally: Inform if player will collide it's allies.
+
+    BODY:
+        -   4 bytes: Local IP (uint)
+        -   4 bytes: Public IP (uint)
+        -   2 bytes: Port (uint)
+        -   1 byte : Server mode (uint)
+        -   1 byte : Status (uint)
+        -   1 byte : Max client (uint)
+        -   1 byte : Friendly fire (bool)
+        -   1 byte : Collision with enemy (bool)
+        -   1 byte : Collision with ally (bool)
+        Total: 16 bytes
+
+    HOST SIDE:
+        Usually sent every time server received modification.
+        PACKAGE PROCESS:
+            host -> client:
+                - 0x0006: SERVER SETTINGS
+
+    CLIENT SIDE:
+        You can send this package to modify server configuration, however you
+        must be connected in localhost to do modification to configuration.
+        Plus, if server is in client mode the only possible modification,
+        is the server mode.
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x0006: SERVER SETTINGS
+            host -> client:
+                - 0x0000: RESPONSE
+                    - 0x01: KO
+                    - 0x02: INVALID HEADER
+                    - 0X03: INVALID BODY
+                    - 0x04: UNAUTHORIZED
+                - 0x0006: SERVER SETTINGS
+
+    * Package can be requested throught an information response package.
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x0000: RESPONSE
+                    - 0x08: INFORMATION
+            host -> client:
+                - 0x0006: SERVER SETTINGS
+
+
+
+
+    2.7. 0x0007: LOCAL SERVER SETTINGS
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        The returned package will always be information of your local server.
+        Everything else is exactly identical to (2.5. 0x0006: SERVER SETTINGS)
+        If you don't have a local server then it will be the host server
+        information.
+
+
+
+
+    2.8. 0x0008: SET USERNAME
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Gives your username to the host server.
+
+    BODY DESCRIPTION:
+        Username: The username you want to set.
+
+    BODY:
+        -   16 bytes: Username (string)
+        Total: 16 bytes
+
+    HOST SIDE:
+        Not sent by host server, if sent you can ignore it.
+
+    CLIENT SIDE:
+        You can send this package only when the server status is (0x00: Lobby).
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x0008: SET USERNAME
+            host -> client:
+                - 0x0000: RESPONSE
+                    - 0x01: KO (If not sent when server status is (0x00: Lobby))
+                    - 0x02: INVALID HEADER
+                    - 0X03: INVALID BODY
+                - 0x0009: PLAYER LIST (Modification applied)
+
+
+
+
+    2.9. 0x0009: PLAYER LIST
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Gets you info about all player connected to the same host server as you.
+        The following body is repeated (NUMBER OF CONNECTED PLAYER) times,
+        to know how many player is in the package refer to header body size.
+
+    BODY DESCRIPTION:
+        Player ID: The way the player is recognized by the host server.
+
+        Username: The username attached to the player ID.
+
+    BODY:
+        -   2  bytes: Player ID (uint)
+        -   16 bytes: Username (string)
+        -   1  byte: Player ready (bool)
+        Total: 18 bytes * (NUMBER OF CONNECTED PLAYER)
+
+
+    HOST SIDE:
+        Host server sends this package in the following case:
+        -   Your client just connected
+        -   New player connected
+        -   Player disconnected
+        -   Player change it's username
+        -   Player change it's status to ready or not ready
+        -   Game is about to start
+        -   Requested by the client
+        PACKAGE PROCESS:
+            host -> client:
+                - 0x0009: PLAYER LIST
+
+    CLIENT SIDE:
+        The client don't need to send this package.
+        If send anyway, it will be ignored or you will get a KO response.
+
+    * Package can be requested throught an information response package.
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x0000: RESPONSE
+                    - 0x08: INFORMATION
+            host -> client:
+                - 0x0009: PLAYER LIST
+
+
+
+
+    2.10. 0x000A: SET READY STATUS
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Indicate to the host server that the client is ready (or not)
+        to start the game.
+
+    BODY DESCRIPTION:
+        Player Ready: (0 = Not Ready / 1 = Ready)
+
+    BODY:
+        -   1  byte: Player Ready (bool)
+        Total: 1 byte
+
+    HOST SIDE:
+        Not sent by host server, if sent you can ignore it.
+
+    CLIENT SIDE:
+        You can send this package only when the server status is (0x00: Lobby).
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x000A: SET READY STATUS
+            host -> client:
+                - 0x0000: RESPONSE
+                    - 0x00: OK (Modification successfully applied)
+                    - 0x01: KO (If sent when server status is not (0x00: Lobby))
+                    - 0x02: INVALID HEADER
+                    - 0X03: INVALID BODY
+
+
+
+
+    2.11. 0x000B: START GAME LOADING
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Indicate to the host that it can start load the game,
+        even if all players aren't ready.
+        Can only be sent by the client connected in localhost to the host.
+
+    BODY:
+        Total: 0 byte
+
+    HOST SIDE:
+        This package will be send when the host has switched
+        to Loading game status. (0x01: Loading game).
+        PACKAGE PROCESS:
+            host -> client:
+                - 0x000B: START GAME LOADING
+
+    CLIENT SIDE:
+        You can send this package only when the host status is (0x00: Lobby).
+        While being connected in localhost.
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x000B: START GAME LOADING
+            host -> client:
+                - 0x000B: START GAME LOADING
+                - 0x0000: RESPONSE
+                    - 0x01: KO (If sent when host status is not (0x00: Lobby))
+                    - 0x02: INVALID HEADER
+                    - 0X03: INVALID BODY
+                    - 0x05: UNAUTHORIZED
+
+
+
+
+    2.12. 0x000C: GAME START
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Indicate to clients that the loading part is done and game starting.
+
+    BODY:
+        Total: 0 byte
+
+    HOST SIDE:
+        The host server send this package when the game is starting,
+        or if requested.
+        PACKAGE PROCESS:
+            host -> client:
+                - 0x000C: GAME START
+
+    CLIENT SIDE:
+        The client must send this when it finished it's own loading part to
+        indicate to the host that it can start the game.
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x000C: GAME START
+
+
+
+
+    2.14. 0x000D: NEW ENTITIES
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Indicate when a new entity is created.
+        If entity already exist, replace it by this new one.
+
+    BODY DESCRIPTION:
+        Entity ID: The entity ID
+
+        Entity Type: The entity type
+
+    BODY:
+        -   2  bytes: Entity ID (uint)
+        -   8  bytes: Entity Type (uint)
+        Total: 10 bytes * (NUMBER OF NEW ENTITIES)
+
+    HOST SIDE:
+        The server can send this package at any time.
+        PACKAGE PROCESS:
+            host -> client:
+                - 0x000D: NEW ENTITIES
+
+    CLIENT SIDE:
+        You should send this package if you got unknown ids.
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x000D: NEW ENTITIES
+            host -> client:
+                - 0x000D: NEW ENTITIES
+
+
+
+
+    2.15. 0x000E: MOVE ENTITIES
+
+    RECOMMENDED PROTOCOL:
+        - UDP
+
+    DESCRIPTION:
+        Indicate when entities has moved.
+
+    BODY DESCRIPTION:
+    - Static part:
+        TimeStamp: The time when the package was sent,
+        relative to the start of the game.
+
+    - Dynamic part:
+        Entity ID: The entity ID
+
+        Entity X Position: The entity X position
+
+        Entity Y Position: The entity Y position
+
+        Entity X Vector: The entity X vector
+
+        Entity Y Vector: The entity Y vector
+
+    BODY:
+    - Static part:
+        -   8  bytes: TimeStamp (uint)
+    - Dynamic part:
+        -   2  bytes: Entity ID (uint)
+        -   2  bytes: Entity X Position (int)
+        -   2  bytes: Entity Y Position (int)
+        -   2  bytes: Entity X Vector (int)
+        -   2  bytes: Entity Y Vector (int)
+        Total: 8 bytes + 10 bytes * (NUMBER OF MOVED ENTITIES)
+
+    HOST SIDE:
+        The server can send this package at any time.
+        PACKAGE PROCESS:
+            host -> client:
+                - 0x000E: MOVE ENTITIES
+
+    CLIENT SIDE:
+        The client don't need to send this package.
+        If send anyway, it will be ignored or you will get a KO response.
+
+
+
+
+    2.16. 0x000F: DESTROY ENTITIES
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Indicate when entities has been destroyed.
+
+    BODY DESCRIPTION:
+        Entity ID: The entity ID
+
+    BODY:
+        -   2  bytes: Entity ID (uint)
+        Total: 2 bytes * (NUMBER OF DESTROYED ENTITIES)
+
+    HOST SIDE:
+        The server can send this package at any time.
+        You must answer with a 0x00: OK response
+        or else the server will continue to send you this information.
+        PACKAGE PROCESS:
+            host -> client:
+                - 0x000F: DESTROY ENTITIES
+            client -> host:
+                - 0x0000: RESPONSE
+                    - 0x00: OK (Modification successfully applied)
+
+    CLIENT SIDE:
+        The client don't need to send this package.
+        If send anyway, it will be ignored or you will get a KO response.
+
+
+
+
+    2.17. 0x0010: CLIENT MOVE EVENT
+
+    RECOMMENDED PROTOCOL:
+        - UDP
+
+    DESCRIPTION:
+        Indicate when a client intend to move.
+
+    BODY DESCRIPTION:
+        up: The client wants to move up
+
+        down: The client wants to move down
+
+        left: The client wants to move left
+
+        right: The client wants to move right
+
+    BODY:
+        -   1 byte: up (bool)
+        -   1 byte: down (bool)
+        -   1 byte: left (bool)
+        -   1 byte: right (bool)
+        Total: 4 bytes
+
+    HOST SIDE:
+        Not sent by host server, if sent you can ignore it.
+
+    CLIENT SIDE:
+        The client can send this package at any time.
+        As long as the package is sent while the host status is (0x02: Game).
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x0010: CLIENT MOVE EVENT
+            host -> client:
+                - 0x0000: RESPONSE
+                    - 0x00: OK (Modification successfully applied)
+                    - 0x01: KO (If sent when host status is not (0x02: Game))
+                    - 0x02: INVALID HEADER
+                    - 0X03: INVALID BODY
+
+
+
+
+    2.18. 0x0011: CLIENT SHOOT EVENT
+
+    RECOMMENDED PROTOCOL:
+        - UDP
+
+    DESCRIPTION:
+        Indicate when a client intend to shoot.
+
+    BODY DESCRIPTION:
+        shooting: The client wants to shoot
+
+    BODY:
+        -   1 byte: shooting (bool)
+        Total: 1 byte
+
+    HOST SIDE:
+        Not sent by host server, if sent you can ignore it.
+
+    CLIENT SIDE:
+        The client can send this package at any time.
+        As long as the package is sent while the host status is (0x02: Game).
+        PACKAGE PROCESS:
+            client -> host:
+                - 0x0011: CLIENT SHOOT EVENT
+            host -> client:
+                - 0x0000: RESPONSE
+                    - 0x00: OK (Modification successfully applied)
+                    - 0x01: KO (If sent when host status is not (0x02: Game))
+                    - 0x02: INVALID HEADER
+                    - 0X03: INVALID BODY
+
+
+
+
+    2.18. 0x0012: ENTITY ACTION
+
+    RECOMMENDED PROTOCOL:
+        - TCP
+
+    DESCRIPTION:
+        Indicate the current action of the entity.
+
+    BODY DESCRIPTION:
+        Entity ID: The entity ID
+
+        Entity Action: The action of the entity
+    BODY:
+        -   2  bytes: Entity ID (uint)
+        -   1  byte: Entity action (uint)
+        Total: 3 bytes * (NUMBER OF NEW ENTITIES)
+
+    HOST SIDE:
+        The server can send this package at any time.
+        PACKAGE PROCESS:
+            host -> client:
+                - 0x0012: MOVE ENTITIES
+
+    CLIENT SIDE:
+        Not sent by the client, if sent you can ignore it.
+
+
+
+
+3.  Error Handling
+
+    The server sends an error message if the client sends invalid requests.
+    A request is invalid if:
+        - the request is invalid
+        - the user has no permission to perform the requested operation
+        - the server is unable to perform the requested operation
+        - the action is already performed
+
+    There is specific response from the server for these errors.
+
+    Here is the list of error responses and their command code:
+        - UNAUTHORIZED: 14
+        - ALREADY_EXIST: 15
+        - UNKNOWN_USER: 16
+        - UNKNOWN_TEAM: 17
+        - UNKNOWN_CHANNEL: 18
+        - UNKNOWN_THREAD: 19
+
+    3.1. UNAUTHORIZED
+
+    The UNAUTHORIZED response is sent if the user has no permission to perform
+    the requested operation.
+
+    3.2. UNKNOWN_(USER/TEAM/CHANNEL/THREAD)
+
+    The UNKNOWN_(USER/TEAM/CHANNEL/THREAD) response is sent if the client
+    requests action on a non-existing user/team/channel/thread.
+
+    3.3. ALREADY_EXIST
+
+    The ALREADY_EXIST response is sent if the client requests to create a user,
+    team, channel, thread that already exists.
+
+4.  Security Considerations
+
+    There is no password authentication for user login.
+    The server verify the context of the user and the user's permission to
+    perform the requested operation.
+    The client check the field size for the request.

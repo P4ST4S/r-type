@@ -1,0 +1,33 @@
+/*
+** EPITECH PROJECT, 2023
+** B-CPP-500-PAR-5-1-rtype-ethan.nguyen
+** File description:
+** Scenes
+*/
+
+#pragma once
+
+enum entityId {
+    NONE_ID,
+    PLAYER1_ID,
+    PLAYER2_ID,
+    PLAYER3_ID,
+    MOB_ID,
+    GHOST_BOSS_ID,
+    MISSILE_ID,
+    PLAYER1_MISSILE_ID = (MISSILE_ID << 4) | PLAYER1_ID,
+    PLAYER2_MISSILE_ID = (MISSILE_ID << 4) | PLAYER2_ID,
+    PLAYER3_MISSILE_ID = (MISSILE_ID << 4) | PLAYER3_ID,
+    MOB_MISSILE_ID = (MISSILE_ID << 4) | MOB_ID,
+    GHOST_BOSS_MISSILE_ID = (MISSILE_ID << 4) | GHOST_BOSS_ID,
+    PURPLE_BLIMP,
+    BLUE_DEVIL,
+};
+
+enum entityAction {
+    DEFAULT_ACTION,
+    MOVE_UP_ACTION,
+    MOVE_DOWN_ACTION,
+    DEATH_ACTION,
+    ATTACK_ACTION
+};

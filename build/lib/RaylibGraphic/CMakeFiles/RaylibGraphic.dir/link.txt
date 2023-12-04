@@ -1,0 +1,2 @@
+/usr/bin/ar qc libRaylibGraphic.a CMakeFiles/RaylibGraphic.dir/src/RaylibGraphic.cpp.o
+/usr/bin/ranlib libRaylibGraphic.a
